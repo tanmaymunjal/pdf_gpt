@@ -1,15 +1,12 @@
 from openai import OpenAI
-import configparser
+from configuration import global_config
 
-config = configparser.ConfigParser()
-config.read("config.ini")
-# Set up your API key
-client = OpenAI(api_key=config["OpenAI"]["API_KEY"])
+client = OpenAI(api_key=global_config["OpenAI"]["API_KEY"])
 
 
-def call_open_api(prompt: str, prompt_length: int):
+def call_open_api(prompt: str, model: str, prompt_length: int):
     response = client.chat.completions.create(
-        model="gpt-3.5-turbo-0125",
+        model=model,
         messages=[{"role": "user", "content": prompt}],
         max_tokens=prompt_length,  # summary can not be longer than original
     )
@@ -33,7 +30,11 @@ def summarise_doc(text: str, page_size: int = 1000):
     j = page_size
     while get_subset(text, i, j) != "":
         generated_summaries.append(
-            call_open_api(format_prompt(text[i:j]), prompt_length=j - i + 1)
+            call_open_api(
+                format_prompt(text[i:j]),
+                model=global_config["OpenAI"]["MODEL"],
+                prompt_length=j - i + 1,
+            )
         )
         i += page_size
         j += page_size
