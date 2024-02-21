@@ -5,9 +5,19 @@ from io import StringIO
 from parser import ParserFactory
 from summarise_gpt import summarise_doc
 from utils import get_file_extension
+from fastapi.middleware.cors import CORSMiddleware
 
 # Create an instance of the FastAPI class
 app = FastAPI()
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Define a route using a decorator
@@ -29,4 +39,4 @@ async def generate_summary(file: UploadFile):
 
 
 if __name__ == "__main__":
-    uvicorn.run("mainapi:app",reload=True)
+    uvicorn.run("mainapi:app", reload=True)

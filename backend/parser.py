@@ -51,6 +51,7 @@ class DocxParser(Parser):
 
         return parsed_text
 
+
 class TxtParser(Parser):
     def read(self):
         return self.file_like_object.decode()
