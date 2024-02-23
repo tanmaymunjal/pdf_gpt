@@ -15,14 +15,15 @@ from pydantic_models import (
     LoginUser,
     PasswordResetRequest,
     UpdateAPIKey,
+    TaskCompletionNotification,
 )
 from configuration import global_config
-from models import User, PotentialUser, PasswordRecoveryRequest
+from models import User, PotentialUser, PasswordRecoveryRequest, UserTasks
 from datetime import datetime, timedelta
 from password_hasher import PasswordHasher
 from middleware import custom_middleware
 from celery_app import generate_summary
-from celery.result import AsyncResult
+from parser import ParserFactory
 import mongoengine
 
 # Create an instance of the FastAPI class
@@ -213,40 +214,79 @@ async def generate_summary(
             )
     else:
         gpt_summariser = GPTSummarisation(api_key=current_user.user_openai_key)
-    task_id = generate_summary.delay(source_stream, file_extension)
-    current_user.user_task_ids.append(task_id)
-    current_user.save()
+    try:
+        parser = ParserFactory(source_stream, file_extension).build()
+    except NotImplementedError:
+        raise HTTPException(
+            status_code=400, detail="Please enter a valid supported file type"
+        )
+    read_docs = parser.read()
+    task_id = generate_summary.delay(read_docs).task_id
+    user_task = Task(
+        user_email=current_user.user_email,
+        user_task_id=task_id,
+        user_read_docs=read_docs,
+        user_task_completed=False,
+        user_generated_summary=None,
+    )
+    user_task.save()
     return {
         "message": "Your task for summary generation has been enqued",
         "task_id": task_id,
     }
 
 
+@app.post("/notify/task")
+async def notify_task(notify_task: TaskCompletionNotification):
+    if notify_task.notification_auth != global_config["Notification"]["API_KEY"]:
+        raise HTTPException(status_code=401, detail="Notification request unauthorised")
+    task = Task.objects(task_id=notify_task.task_id).first()
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    task.update(
+        set__user_generated_summary=notify_task.generated_summary,
+        set__user_task_status=notify_task.task_status,
+        set__user_task_completed=datetime.now(),
+    )
+    return {"message": "Task completed"}
+
+
 @app.get("/user/get_summary")
 async def get_summary(
     current_user: Annotated[User, Depends(get_current_user)], task_id: str
 ):
-    if task_id not in current_user.user_task_ids:
+    task = Task.objects(user_email=current_user.user_email, task_id=task_id).first()
+    if task is None:
         raise HTTPException(
             status_code=401,
             detail="The task can only be checked by the user to which the task belongs",
         )
-    res = AsyncResult(task_id)
-    if not res.ready():
+    if task.user_task_status == "PENDING":
         return {"message": "Task is still running, please wait", "status": "PENDING"}
-    if res.failed():
+    if task.user_task_status == "FAILED":
         return {
             "message": "Task has failed, kindly resend the task or contact the team for further support",
             "status": "FAILED",
         }
-    current_user.user_task_ids.remove(task_id)
-    current_user.save()
-    return {"message": "Task completed succesfully", "result": res.get()}
+    return {"message": "Task completed succesfully", "result": task.user_task_generated}
 
 
 @app.get("/user/pending_tasks")
 async def pending_tasks(current_user: Annotated[User, Depends(get_current_user)]):
-    return {"pending_tasks": current_user.user_task_ids}
+    tasks = Task.objects(user_email=current_user.user_email, user_task_status="PENDING")
+    tasks_list = [task.to_mongo().to_dict() for task in tasks]
+    return {"pending_tasks": tasks_list}
+
+
+@app.get("/user/completed_tasks")
+async def get_all_completed_tasks(
+    current_user: Annotated[User, Depends(get_current_user)]
+):
+    tasks = Task.objects(
+        user_email=current_user.user_email, user_task_status__in=["SUCCESS", "FAILED"]
+    )
+    tasks_list = [task.to_mongo().to_dict() for task in tasks]
+    return {"completed_tasks": tasks_list}
 
 
 @app.post("/user/update_key")

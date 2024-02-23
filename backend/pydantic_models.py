@@ -26,3 +26,10 @@ class PasswordResetRequest(BaseModel):
 class UpdateAPIKey(BaseModel):
     user_email: str
     openai_api_key: str
+
+
+class TaskCompletionNotification(BaseModel):
+    notification_auth: str
+    task_id: str
+    generated_summary: str | None
+    task_status: str
