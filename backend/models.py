@@ -5,6 +5,7 @@ from mongoengine import (
     EmailField,
     DateTimeField,
     EmbeddedDocument,
+    ListField,
 )
 from datetime import datetime
 from configuration import global_config
@@ -25,6 +26,7 @@ class User(Document):
     )
     user_password_recovery_request = PasswordRecoveryRequest()
     user_openai_key = StringField()
+    user_task_ids = ListField(StringField(), default=[])
 
 
 class PotentialUser(Document):

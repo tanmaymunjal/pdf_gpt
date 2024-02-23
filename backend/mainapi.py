@@ -2,8 +2,6 @@ from fastapi import FastAPI, HTTPException, UploadFile, Depends
 from typing import Annotated
 import uvicorn
 from io import StringIO
-from parser import ParserFactory
-from summarise_gpt import GPTSummarisation
 from utils import (
     get_file_extension,
     send_otp,
@@ -23,6 +21,8 @@ from models import User, PotentialUser, PasswordRecoveryRequest
 from datetime import datetime, timedelta
 from password_hasher import PasswordHasher
 from middleware import custom_middleware
+from celery_app import generate_summary
+from celery.result import AsyncResult
 import mongoengine
 
 # Create an instance of the FastAPI class
@@ -213,14 +213,40 @@ async def generate_summary(
             )
     else:
         gpt_summariser = GPTSummarisation(api_key=current_user.user_openai_key)
-    try:
-        parser = ParserFactory(source_stream, file_extension).build()
-    except NotImplementedError:
+    task_id = generate_summary.delay(source_stream, file_extension)
+    current_user.user_task_ids.append(task_id)
+    current_user.save()
+    return {
+        "message": "Your task for summary generation has been enqued",
+        "task_id": task_id,
+    }
+
+
+@app.get("/user/get_summary")
+async def get_summary(
+    current_user: Annotated[User, Depends(get_current_user)], task_id: str
+):
+    if task_id not in current_user.user_task_ids:
         raise HTTPException(
-            status_code=400, detail="Please send a file with valid supported extension"
+            status_code=401,
+            detail="The task can only be checked by the user to which the task belongs",
         )
-    read_docs = parser.read()
-    return {"summary": gpt_summariser.summarise_doc(read_docs)}
+    res = AsyncResult(task_id)
+    if not res.ready():
+        return {"message": "Task is still running, please wait", "status": "PENDING"}
+    if res.failed():
+        return {
+            "message": "Task has failed, kindly resend the task or contact the team for further support",
+            "status": "FAILED",
+        }
+    current_user.user_task_ids.remove(task_id)
+    current_user.save()
+    return {"message": "Task completed succesfully", "result": res.get()}
+
+
+@app.get("/user/pending_tasks")
+async def pending_tasks(current_user: Annotated[User, Depends(get_current_user)]):
+    return {"pending_tasks": current_user.user_task_ids}
 
 
 @app.post("/user/update_key")
