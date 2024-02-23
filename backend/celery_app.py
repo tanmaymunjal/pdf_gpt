@@ -18,6 +18,24 @@ app = Celery(
 
 @app.task(bind=True, track_started=True)
 def generate_summary(self, read_docs):
+    """
+    Celery task to generate a summary using GPT and send it to an API gateway.
+
+    Args:
+        self: Reference to the task instance.
+        read_docs (str): Text content to be summarized.
+
+    Returns:
+        None
+
+    Sends a POST request to the configured API_GATEWAY endpoint with the generated summary.
+
+    On success, sends a notification to the API gateway with the task_id, generated summary,
+    and task_status as "SUCCESS".
+
+    On failure, sends a notification to the API gateway with the task_id and task_status as "FAILED".
+    """
+
     try:
         summary = gpt_summariser.summarise_doc(read_docs)
         requests.post(

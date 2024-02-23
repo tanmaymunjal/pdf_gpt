@@ -3,8 +3,16 @@ import os
 
 
 def setup_logger(log_file, level=logging.INFO):
-    """Set up a logger with the specified log level and log file."""
-    # Create logger
+    """
+    Set up a logger with the specified log level and log file.
+
+    Args:
+        log_file (str): Path to the log file.
+        level (int, optional): Logging level (default is logging.INFO).
+
+    Returns:
+        logging.Logger: Logger instance set up with the specified configurations.
+    """
     logger = logging.getLogger()
     logger.setLevel(level)
 

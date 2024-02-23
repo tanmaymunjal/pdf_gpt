@@ -46,11 +46,23 @@ mongoengine.connect(global_config["Application"]["DB"])
 
 @app.get("/")
 async def sanity_check():
+    """
+    Health check endpoint to ensure the service is up and running.
+    """
     return {"message": "Service is up!"}
 
 
 @app.post("/user/register/password")
 async def register_user(user: CreateUser):
+    """
+    Endpoint to register a new user with email and password.
+
+    Args:
+        user (CreateUser): User data including email and password.
+
+    Returns:
+        dict: Message indicating OTP sent and expiry time.
+    """
     current_user = User.objects(user_email=user.user_email).first()
     if current_user is not None:
         raise HTTPException(status_code=400, detail="User already exists!")
@@ -75,6 +87,15 @@ async def register_user(user: CreateUser):
 
 @app.post("/user/register/verify")
 async def verify_user_otp(user_verification: VerifyUser):
+    """
+    Endpoint to verify user's OTP for registration.
+
+    Args:
+        user_verification (VerifyUser): User data including email and OTP.
+
+    Returns:
+        dict: Message indicating successful user creation and JWT token.
+    """
     potential_user = PotentialUser.objects(
         user_email=user_verification.user_email
     ).first()
@@ -110,6 +131,15 @@ async def verify_user_otp(user_verification: VerifyUser):
 
 @app.post("/user/register/resend_otp")
 async def resend_otp(user_email: str):
+    """
+    Endpoint to resend OTP for user registration.
+
+    Args:
+        user_email (str): Email of the user requesting OTP resend.
+
+    Returns:
+        dict: Message indicating OTP sent and expiry time.
+    """
     potential_user = PotentialUser.objects(
         user_email=user_verification.user_email
     ).first()
@@ -131,6 +161,15 @@ async def resend_otp(user_email: str):
 
 @app.post("/user/login/password")
 async def login_user(login_user: LoginUser):
+    """
+    Endpoint for user login using email and password.
+
+    Args:
+        login_user (LoginUser): User data including email and password.
+
+    Returns:
+        dict: Message indicating successful login and JWT token.
+    """
     user = User.objects(user_email=login_user.user_email).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -143,6 +182,15 @@ async def login_user(login_user: LoginUser):
 
 @app.post("/user/auth/refresh_token")
 async def get_refresh_token(current_user: Annotated[User, Depends(get_current_user)]):
+    """
+    Endpoint to generate a refresh token for the current user.
+
+    Args:
+        current_user (User): Current user obtained from JWT token.
+
+    Returns:
+        dict: Message indicating successful refresh token creation.
+    """
     return {
         "message": "Refresh token created",
         "refresh_token": encode_user(current_user.user_email),
@@ -151,6 +199,15 @@ async def get_refresh_token(current_user: Annotated[User, Depends(get_current_us
 
 @app.post("/user/auth/forgot_password")
 async def reset_password_request(user_email: str):
+    """
+    Endpoint to request password reset OTP.
+
+    Args:
+        user_email (str): Email of the user requesting password reset.
+
+    Returns:
+        dict: Message indicating OTP sent and expiry time.
+    """
     user = User.objects(user_email=login_user.user_email).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -171,6 +228,15 @@ async def reset_password_request(user_email: str):
 
 @app.post("/user/auth/reset_password")
 async def reset_password(password_reset_request: PasswordResetRequest):
+    """
+    Endpoint to reset user password using OTP verification.
+
+    Args:
+        password_reset_request (PasswordResetRequest): Data including email, OTP, and new password.
+
+    Returns:
+        dict: Message indicating successful password reset.
+    """
     user = User.objects(user_email=password_reset_request.user_email).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -203,6 +269,27 @@ async def reset_password(password_reset_request: PasswordResetRequest):
 async def generate_summary(
     current_user: Annotated[User, Depends(get_current_user)], file: UploadFile
 ):
+    """
+    This endpoint allows authenticated users to upload a file, which will be parsed and summarized using GPT.
+    The summary generation task is enqueued in background using Celery, and the task ID is
+    returned to the user for tracking.
+
+    Args:
+        current_user (User): The current authenticated user obtained from JWT token.
+        file (UploadFile): The file to be summarized.
+
+    Returns:
+        dict: A message indicating successful task enqueuing and the task ID.
+
+    Raises:
+        HTTPException(402): If the user has exhausted the free summary generations limit.
+        HTTPException(400): If the uploaded file type is not supported.
+
+    Note:
+        - Supported file types for summary generation include .txt.
+        - The user's available free summary generations are tracked, and they may need to upgrade their
+          plan if the limit is exceeded.
+    """
     file_extension = get_file_extension(file.filename)
     source_stream = await file.read()
     if current_user.user_openai_key is None:
@@ -238,6 +325,15 @@ async def generate_summary(
 
 @app.post("/notify/task")
 async def notify_task(notify_task: TaskCompletionNotification):
+    """
+    Endpoint to notify task completion by celery worker. Needs internal API key to authorise
+
+    Args:
+        notify_task (TaskCompletionNotification): Notification data including task ID and completion status.
+
+    Returns:
+        dict: Message indicating successful task completion notification.
+    """
     if notify_task.notification_auth != global_config["Notification"]["API_KEY"]:
         raise HTTPException(status_code=401, detail="Notification request unauthorised")
     task = Task.objects(task_id=notify_task.task_id).first()
@@ -255,6 +351,16 @@ async def notify_task(notify_task: TaskCompletionNotification):
 async def get_summary(
     current_user: Annotated[User, Depends(get_current_user)], task_id: str
 ):
+    """
+    Endpoint to get summary for a specific task if task is completed.
+
+    Args:
+        current_user (User): Current user obtained from JWT token.
+        task_id (str): ID of the task to get summary for.
+
+    Returns:
+        dict: Summary of the specified task.
+    """
     task = Task.objects(user_email=current_user.user_email, task_id=task_id).first()
     if task is None:
         raise HTTPException(
@@ -273,6 +379,15 @@ async def get_summary(
 
 @app.get("/user/pending_tasks")
 async def pending_tasks(current_user: Annotated[User, Depends(get_current_user)]):
+    """
+    Endpoint to get all pending tasks for the current user.
+
+    Args:
+        current_user (User): Current user obtained from JWT token.
+
+    Returns:
+        list: List of pending tasks for the current user.
+    """
     tasks = Task.objects(user_email=current_user.user_email, user_task_status="PENDING")
     tasks_list = [task.to_mongo().to_dict() for task in tasks]
     return {"pending_tasks": tasks_list}
@@ -282,6 +397,16 @@ async def pending_tasks(current_user: Annotated[User, Depends(get_current_user)]
 async def get_all_completed_tasks(
     current_user: Annotated[User, Depends(get_current_user)]
 ):
+    """
+    Endpoint to get all completed tasks for the current user.
+
+    Args:
+        current_user (User): Current user obtained from JWT token.
+
+    Returns:
+        list: List of completed tasks for the current user.
+    """
+
     tasks = Task.objects(
         user_email=current_user.user_email, user_task_status__in=["SUCCESS", "FAILED"]
     )
@@ -291,6 +416,15 @@ async def get_all_completed_tasks(
 
 @app.post("/user/update_key")
 async def update_openai_key(update_api_key: UpdateAPIKey):
+    """
+    Endpoint to update OpenAI API key for the current user.
+
+    Args:
+        update_api_key (UpdateAPIKey): Data including user email and new OpenAI API key.
+
+    Returns:
+        dict: Message indicating successful update of OpenAI API key.
+    """
     user = User.objects(user_email=update_api_key.user_email).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
