@@ -198,3 +198,6 @@ cython_debug/
 
 # ignore config files
 *.ini
+
+# ignore log fie
+log.txt

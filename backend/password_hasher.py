@@ -1,11 +1,12 @@
 import string
 import hashlib
 from configuration import global_config
+import random
 
 
 class PasswordHasher:
     def __init__(self, user_password):
-        self.user_password = self.user_password
+        self.user_password = user_password
 
     @staticmethod
     def generate_random_string(length: int = 6) -> str:
@@ -41,7 +42,7 @@ class PasswordHasher:
 
     def hash_password(self) -> str:
         salt = PasswordHasher.generate_random_string(
-            k=global_config["Application"]["SALT_LENGTH"]
+            length=int(global_config["Application"]["SALT_LENGTH"])
         )
         new_user_password = salt + self.user_password
         user_hashed_password = PasswordHasher.hash_string(new_user_password)

@@ -1,6 +1,18 @@
-from mongoengine import Document, IntField, StringField, EmailField, DateTimeField
+from mongoengine import (
+    Document,
+    IntField,
+    StringField,
+    EmailField,
+    DateTimeField,
+    EmbeddedDocument,
+)
 from datetime import datetime
 from configuration import global_config
+
+
+class PasswordRecoveryRequest(EmbeddedDocument):
+    otp = StringField()
+    otp_expirty = DateTimeField()
 
 
 class User(Document):
@@ -11,6 +23,8 @@ class User(Document):
     user_docs_capacity = IntField(
         default=global_config["Application"]["MAX_FREE_TRIAL_USAGE"]
     )
+    user_password_recovery_request = PasswordRecoveryRequest()
+    user_openai_key = StringField()
 
 
 class PotentialUser(Document):

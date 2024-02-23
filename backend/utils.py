@@ -1,5 +1,8 @@
 import random
 import string
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
+from configuration import global_config
 
 
 def get_file_extension(filename: str) -> str:
@@ -17,28 +20,33 @@ def generate_otp(length: int = 6) -> str:
 
 def send_otp_email(email: str, otp: str) -> None:
     """Send OTP to the provided email address."""
-    # SMTP server configuration
-    smtp_server = "smtp.example.com"
-    smtp_port = 587  # Port for TLS encryption
-    smtp_username = "your_smtp_username"
-    smtp_password = "your_smtp_password"
+    # SendGrid API key
+    SENDGRID_API_KEY = global_config["SendGrid"]["API_KEY"]
 
     # Email content
-    sender_email = "your_email@example.com"
+    sender_email = global_config["SendGrid"]["SENDER_EMAIL"]
     subject = "Your OTP"
     body = f"Your OTP is: {otp}"
 
-    # Connect to SMTP server
-    server = smtplib.SMTP(smtp_server, smtp_port)
-    server.starttls()
-    server.login(smtp_username, smtp_password)
+    message = Mail(
+        from_email=sender_email,
+        to_emails=email,
+        subject=subject,
+        plain_text_content=body,
+    )
 
-    # Send email
-    message = f"Subject: {subject}\n\n{body}"
-    server.sendmail(sender_email, email, message)
+    try:
+        # Initialize SendGrid client
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
 
-    # Quit server
-    server.quit()
+        # Send email
+        response = sg.send(message)
+        if response.status_code == 202:
+            return otp
+        else:
+            return 0
+    except Exception as e:
+        return 0
 
 
 def send_otp(email: str) -> bool:

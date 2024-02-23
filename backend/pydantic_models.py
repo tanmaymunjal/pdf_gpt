@@ -15,3 +15,14 @@ class VerifyUser(BaseModel):
 class LoginUser(BaseModel):
     user_email: str
     user_password: str
+
+
+class PasswordResetRequest(BaseModel):
+    user_email: str
+    user_otp: str
+    user_new_password: str
+
+
+class UpdateAPIKey(BaseModel):
+    user_email: str
+    openai_api_key: str
