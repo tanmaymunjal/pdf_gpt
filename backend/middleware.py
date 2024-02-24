@@ -1,4 +1,4 @@
-from logger import logger
+from backend.logger import logger
 from fastapi import Request
 
 

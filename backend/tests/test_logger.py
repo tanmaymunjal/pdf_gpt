@@ -32,8 +32,6 @@ def test_setup_logger():
         # Check if messages are logged to the file
         with open(log_file, "r") as f:
             lines = f.readlines()
-            print("LOG: ")
-            print(lines)
             assert len(lines) == 2
             assert "INFO" in lines[0]
             assert "Test message" in lines[0]
