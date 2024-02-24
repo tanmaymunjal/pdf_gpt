@@ -1,5 +1,5 @@
 from openai import OpenAI
-from configuration import global_config
+from backend.configuration import global_config
 
 
 class GPTSummarisation:

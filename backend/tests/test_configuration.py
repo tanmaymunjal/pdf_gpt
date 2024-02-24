@@ -2,6 +2,8 @@ import os
 import pytest
 from backend.configuration import SingletonConfiguration, CONFIGURATION_PATH
 import configparser
+
+
 def test_singleton_instance():
     # Create two instances of SingletonConfiguration
     singleton_instance1 = SingletonConfiguration(CONFIGURATION_PATH)
@@ -9,6 +11,7 @@ def test_singleton_instance():
 
     # Assert that both instances refer to the same object
     assert singleton_instance1 is singleton_instance2
+
 
 def test_read_config():
     # Create an instance of SingletonConfiguration

@@ -9,12 +9,12 @@ from mongoengine import (
     BooleanField,
 )
 from datetime import datetime
-from configuration import global_config
+from backend.configuration import global_config
 
 
 class PasswordRecoveryRequest(EmbeddedDocument):
-    otp = StringField()
-    otp_expirty = DateTimeField()
+    otp = StringField(required=True)
+    otp_expirty = DateTimeField(required=True)
 
 
 class UserTasks(Document):
@@ -28,10 +28,10 @@ class UserTasks(Document):
 
 
 class User(Document):
-    user_email = EmailField(required=True)
+    user_email = EmailField(required=True, unique=True)
     user_name = StringField(required=True)
-    user_hashed_password = StringField()
-    user_salt = StringField()
+    user_hashed_password = StringField(required=True)
+    user_salt = StringField(required=True)
     user_docs_capacity = IntField(
         default=global_config["Application"]["MAX_FREE_TRIAL_USAGE"]
     )
@@ -40,9 +40,9 @@ class User(Document):
 
 
 class PotentialUser(Document):
-    user_email = EmailField(required=True)
+    user_email = EmailField(required=True, unique=True)
     user_name = StringField(required=True)
-    user_salt = StringField()
-    user_hashed_password = StringField()
-    user_otp_sent = IntField()
+    user_salt = StringField(required=True)
+    user_hashed_password = StringField(required=True)
+    user_otp_sent = IntField(required=True)
     user_otp_sent_at = DateTimeField(default=datetime.now())
