@@ -1,6 +1,6 @@
 import string
 import hashlib
-from configuration import global_config
+from backend.configuration import global_config
 import random
 
 

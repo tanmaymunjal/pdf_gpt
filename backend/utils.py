@@ -2,8 +2,8 @@ import random
 import string
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-from configuration import global_config
-from password_hasher import PasswordHasher
+from backend.configuration import global_config
+from backend.password_hasher import PasswordHasher
 
 
 def get_file_extension(filename: str) -> str:
@@ -97,7 +97,7 @@ def send_otp(email: str) -> bool:
         bool: True if the OTP is sent successfully, False otherwise.
     """
     try:
-        otp = generate_otp()
+        otp = generate_otp(int(global_config["Application"]["OTP_LENGTH"].strip()))
         send_email(email, otp)
         return int(otp)
     except:
