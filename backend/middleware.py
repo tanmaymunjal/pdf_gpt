@@ -1,5 +1,7 @@
 from backend.logger import logger
 from fastapi import Request
+import time
+import traceback
 
 
 async def custom_middleware(request: Request, call_next):
@@ -24,6 +26,7 @@ async def custom_middleware(request: Request, call_next):
         - This middleware is intended to be used as part of a FastAPI application pipeline.
         - It logs details about both successful and failed requests.
     """
+    start_time = time.time()
     try:
         logger.info(f"Request received: {request.method} {request.url}")
         logger.info(f"Headers: {request.headers}")
@@ -33,9 +36,12 @@ async def custom_middleware(request: Request, call_next):
 
         response = await call_next(request)
 
-        logger.info(f"Response: {response.status_code}")
+        process_time = time.time() - start_time
+        logger.info(
+            f"Response: {response.status_code}, Latency: {process_time:.2f} seconds"
+        )
 
         return response
     except Exception as e:
-        logger.error(f"Error processing request: {str(e)}")
-        raise
+        logger.error(f"Error processing request: {traceback.format_exc()}")
+        raise Exception(repr(e))

@@ -5,7 +5,6 @@ from backend.authentication import encode_user, decode_jwt_token, get_current_us
 from backend.configuration import global_config
 from unittest.mock import MagicMock
 from fastapi import HTTPException
-from freezegun import freeze_time
 from backend.models import User
 
 
@@ -27,10 +26,9 @@ from backend.models import User
         ("user4@example.com", "", 3600),
     ],
 )
-@freeze_time("2024-01-01")
 def test_encode_user(user_email, jwt_secret, jwt_expiry):
     current_time = datetime.utcnow()
-    token = encode_user(user_email, jwt_secret, jwt_expiry)
+    token = encode_user(user_email, datetime.utcnow(), jwt_secret, jwt_expiry)
     decoded_token = jwt.decode(token, jwt_secret, algorithms=["HS256"])
     assert decoded_token["user_email"] == user_email
     assert decoded_token["exp"] == int(
@@ -56,7 +54,6 @@ def test_encode_user(user_email, jwt_secret, jwt_expiry):
         ("user4@example.com", "", 3600),
     ],
 )
-@freeze_time("2024-01-01")
 def test_decode_jwt_token(user_email, jwt_secret, jwt_expiry):
     # Test data
     token = jwt.encode({"user_email": user_email}, jwt_secret, algorithm="HS256")
@@ -105,7 +102,6 @@ def test_decode_jwt_token(user_email, jwt_secret, jwt_expiry):
         ("user4@example.com", "", 3600),
     ],
 )
-@freeze_time("2024-01-01")
 def test_get_current_user(user_email, jwt_secret, jwt_expiry):
     # Mock User.objects
     user_mock = MagicMock()
@@ -113,7 +109,7 @@ def test_get_current_user(user_email, jwt_secret, jwt_expiry):
     User.objects = MagicMock(return_value=user_mock)
 
     # Test data
-    token = encode_user(user_email, jwt_secret, jwt_expiry)
+    token = encode_user(user_email, datetime.utcnow(), jwt_secret, jwt_expiry)
 
     # Test method
     user = get_current_user(token, jwt_secret)

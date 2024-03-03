@@ -1,6 +1,6 @@
 from celery import Celery
-from summarise_gpt import GPTSummarisation
-from configuration import global_config
+from backend.summarise_gpt import GPTSummarisation
+from backend.configuration import global_config
 import requests
 
 # there is a memory leak in celery codebase

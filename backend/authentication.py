@@ -2,13 +2,14 @@ import jwt
 from backend.models import User
 from fastapi import HTTPException
 from backend.configuration import global_config
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 
 def encode_user(
     user_email: str,
+    curr_date_time: int,
     secret_key: str = global_config["Application"]["JWT_SECRET"],
-    exp=int(global_config["Application"]["JWT_EXPIRY_TIME"].strip()),
+    exp: int = int(global_config["Application"]["JWT_EXPIRY_TIME"].strip()),
 ):
     """
     Generates a JSON Web Token (JWT) containing user information.
@@ -25,7 +26,7 @@ def encode_user(
     """
     payload = {
         "user_email": user_email,
-        "exp": datetime.utcnow() + timedelta(seconds=exp),
+        "exp": curr_date_time + timedelta(seconds=exp),
     }
 
     # Generate JWT token

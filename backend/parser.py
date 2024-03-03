@@ -1,5 +1,6 @@
 from docx import Document
 from abc import ABC, abstractmethod
+import io
 
 
 class ParserFactory:
@@ -72,29 +73,10 @@ class DocxParser(Parser):
         Returns:
             str: The parsed text content of the .docx file.
         """
-        doc = Document(self.file_like_object)
-
-        # Initialize an empty list to store the text
-        text = []
-        page_text = []
-
-        # Iterate over paragraphs in the document
-        for paragraph in doc.paragraphs:
-            page_text.append(paragraph.text)
-
-            # Check if a new page begins (based on section information)
-            if paragraph._element.tag.endswith("sectPr"):
-                text.append(f"Page {page_num}:\n{' '.join(page_text)}")
-                page_text = []
-
-        # Append the last page
-        if page_text:
-            text.append(f"Page {page_num}:\n{' '.join(page_text)}")
-
-        # Join the list of text into a single string
-        parsed_text = "\n\n".join(text)
-
-        return parsed_text
+        file_stream = io.BytesIO(self.file_like_object)
+        doc = Document(file_stream)
+        text = "\n".join(paragraph.text for paragraph in doc.paragraphs)
+        return text
 
 
 class TxtParser(Parser):

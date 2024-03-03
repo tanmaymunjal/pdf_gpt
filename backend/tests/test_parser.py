@@ -3,6 +3,12 @@ from io import BytesIO
 from backend.parser import ParserFactory, DocxParser, TxtParser
 
 
+def open_file_binary_str(file_path: str):
+    with open(file_path, "rb") as file:
+        byte_content = file.read()
+    return byte_content
+
+
 class TestParserFactory(unittest.TestCase):
     def test_build_docx_parser(self):
         file_like_object = BytesIO(b"")
@@ -26,31 +32,21 @@ class TestParserFactory(unittest.TestCase):
             parser = factory.build()
 
 
-# class TestDocxParser(unittest.TestCase):
-#     def test_read_docx(self):
-#         # Mock a .docx file-like object
-#         file_like_object = BytesIO(b"Mock .docx file content")
-
-#         # Create a DocxParser instance
-#         parser = DocxParser(file_like_object)
-
-#         # Read and parse the content
-#         parsed_content = parser.read()
-
-#         # Assert the parsed content matches the expected result
-#         self.assertEqual(parsed_content, "Mock .docx file content")
+class TestTxtParser(unittest.TestCase):
+    def test_parse_txt(self):
+        file_like_object = open_file_binary_str("tests/test.txt")
+        file_extension = "txt"
+        factory = ParserFactory(file_like_object, file_extension)
+        parser = factory.build()
+        text = parser.read().strip()
+        assert text == "Hey"
 
 
-# class TestTxtParser(unittest.TestCase):
-#     def test_read_txt(self):
-#         # Mock a .txt file-like object
-#         file_like_object = BytesIO(b"Mock .txt file content")
-
-#         # Create a TxtParser instance
-#         parser = TxtParser(file_like_object)
-
-#         # Read and parse the content
-#         parsed_content = parser.read()
-
-#         # Assert the parsed content matches the expected result
-#         self.assertEqual(parsed_content, "Mock .txt file content")
+class TestDocxParser(unittest.TestCase):
+    def test_parse_docx(self):
+        file_like_object = open_file_binary_str("tests/test.docx")
+        file_extension = "docx"
+        factory = ParserFactory(file_like_object, file_extension)
+        parser = factory.build()
+        text = parser.read().strip()
+        assert text == "Hello"

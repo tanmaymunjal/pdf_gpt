@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from backend.password_hasher import PasswordHasher
 import string
 import hashlib
