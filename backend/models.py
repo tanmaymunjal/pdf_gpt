@@ -7,6 +7,7 @@ from mongoengine import (
     EmbeddedDocument,
     ListField,
     BooleanField,
+    EmbeddedDocumentField,
 )
 from datetime import datetime
 from backend.configuration import global_config
@@ -14,7 +15,7 @@ from backend.configuration import global_config
 
 class PasswordRecoveryRequest(EmbeddedDocument):
     otp = StringField(required=True)
-    otp_expirty = DateTimeField(required=True)
+    otp_expiry = DateTimeField(required=True)
 
 
 class UserTasks(Document):
@@ -35,8 +36,9 @@ class User(Document):
     user_docs_capacity = IntField(
         default=global_config["Application"]["MAX_FREE_TRIAL_USAGE"]
     )
-    user_password_recovery_request = PasswordRecoveryRequest()
+    user_password_recovery_request = EmbeddedDocumentField(PasswordRecoveryRequest)
     user_openai_key = StringField()
+    jwt_invalidated_at = DateTimeField()
 
 
 class PotentialUser(Document):

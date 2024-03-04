@@ -56,10 +56,14 @@ def test_encode_user(user_email, jwt_secret, jwt_expiry):
 )
 def test_decode_jwt_token(user_email, jwt_secret, jwt_expiry):
     # Test data
-    token = jwt.encode({"user_email": user_email}, jwt_secret, algorithm="HS256")
+    token = jwt.encode(
+        {"user_email": user_email, "issued_at": int(datetime.utcnow().timestamp())},
+        jwt_secret,
+        algorithm="HS256",
+    )
 
     # Test method
-    decoded_user_email = decode_jwt_token(token, jwt_secret)
+    decoded_user_email, _ = decode_jwt_token(token, jwt_secret)
 
     # Assertion
     assert user_email == decoded_user_email

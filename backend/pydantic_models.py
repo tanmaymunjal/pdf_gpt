@@ -17,15 +17,10 @@ class LoginUser(BaseModel):
     user_password: str
 
 
-class PasswordResetRequest(BaseModel):
+class PasswordResetRequestModel(BaseModel):
     user_email: str
     user_otp: str
     user_new_password: str
-
-
-class UpdateAPIKey(BaseModel):
-    user_email: str
-    openai_api_key: str
 
 
 class TaskCompletionNotification(BaseModel):

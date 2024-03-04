@@ -2,7 +2,7 @@ import jwt
 from backend.models import User
 from fastapi import HTTPException
 from backend.configuration import global_config
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 
 def encode_user(
@@ -27,6 +27,7 @@ def encode_user(
     payload = {
         "user_email": user_email,
         "exp": curr_date_time + timedelta(seconds=exp),
+        "issued_at": int(curr_date_time.replace(tzinfo=timezone.utc).timestamp()),
     }
 
     # Generate JWT token
@@ -54,7 +55,9 @@ def decode_jwt_token(
     """
     try:
         decoded_token = jwt.decode(token, secret_key, algorithms=["HS256"])
-        return decoded_token["user_email"]
+        return decoded_token["user_email"], datetime.utcfromtimestamp(
+            decoded_token["issued_at"]
+        )
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=410, detail="The jwt token has expired")
     except Exception as err:
@@ -78,8 +81,28 @@ def get_current_user(
     Raises:
         HTTPException: If the user corresponding to the token is not found.
     """
-    user_email = decode_jwt_token(token, secret_key)
+    user_email, issued_at = decode_jwt_token(token, secret_key)
     user = User.objects(user_email=user_email).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
+    if user.jwt_invalidated_at is not None and issued_at < user.jwt_invalidated_at:
+        raise HTTPException(
+            status_code=401, detail="This jwt token has already been invalidated"
+        )
     return user
+
+
+def get_current_user_secure_external(token: str):
+    """
+    Retrieves the user corresponding to the given JWT token.
+
+    Args:
+        token (str): JWT token representing the user.
+
+    Returns:
+        User: User object corresponding to the provided token.
+
+    Raises:
+        HTTPException: If the user corresponding to the token is not found.
+    """
+    return get_current_user(token)

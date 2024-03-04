@@ -13,11 +13,12 @@ app = Celery(
     broker_pool_limit=0,
     broker_transport_options={"confirm_publish": True},
     ignore_result=True,
+    include=["backend.celery_app"],
 )
 
 
 @app.task(bind=True, track_started=True)
-def generate_summary(self, read_docs):
+def generate_summary_celery_task(self, user_openai_key, read_docs):
     """
     Celery task to generate a summary using GPT and send it to an API gateway.
 
@@ -37,10 +38,11 @@ def generate_summary(self, read_docs):
     """
 
     try:
+        gpt_summariser = GPTSummarisation(user_openai_key)
         summary = gpt_summariser.summarise_doc(read_docs)
         requests.post(
             global_config["Application"]["API_GATEWAY"],
-            body={
+            json={
                 "notification_auth": global_config["Notification"]["API_KEY"],
                 "task_id": self.request.id,
                 "generated_summary": summary,
@@ -50,7 +52,7 @@ def generate_summary(self, read_docs):
     except:
         requests.post(
             global_config["Application"]["API_GATEWAY"],
-            body={
+            json={
                 "notification_auth": global_config["Notification"]["API_KEY"],
                 "task_id": self.request.id,
                 "task_status": "FAILED",

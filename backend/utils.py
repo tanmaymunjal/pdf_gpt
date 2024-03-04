@@ -100,5 +100,5 @@ def send_otp(email: str) -> bool:
         otp = generate_otp(int(global_config["Application"]["OTP_LENGTH"].strip()))
         send_email(email, otp)
         return int(otp)
-    except:
+    except Exception as err:
         return 0

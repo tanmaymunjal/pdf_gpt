@@ -95,7 +95,7 @@ class GPTSummarisation:
         generated_summaries = []
         i = 0
         j = page_size
-        while get_subset(text, i, j) != "":
+        while GPTSummarisation.get_subset(text, i, j) != "":
             generated_summaries.append(
                 self.call_open_api(
                     prompt=GPTSummarisation.format_prompt(text[i:j]),

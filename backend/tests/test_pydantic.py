@@ -10,8 +10,7 @@ from backend.pydantic_models import (
     CreateUser,
     VerifyUser,
     LoginUser,
-    PasswordResetRequest,
-    UpdateAPIKey,
+    PasswordResetRequestModel,
     TaskCompletionNotification,
 )
 
@@ -60,7 +59,7 @@ def test_password_reset_request_model():
         "user_otp": "123456",
         "user_new_password": "new_password123",
     }
-    assert PasswordResetRequest(**reset_data)
+    assert PasswordResetRequestModel(**reset_data)
 
     # Invalid data
     invalid_reset_data = {
@@ -68,18 +67,7 @@ def test_password_reset_request_model():
         "user_new_password": "new_password123",
     }
     with pytest.raises(ValidationError):
-        PasswordResetRequest(**invalid_reset_data)
-
-
-def test_update_api_key_model():
-    # Valid data
-    update_data = {"user_email": "john@example.com", "openai_api_key": "abc123"}
-    assert UpdateAPIKey(**update_data)
-
-    # Invalid data
-    invalid_update_data = {"openai_api_key": "abc123"}
-    with pytest.raises(ValidationError):
-        UpdateAPIKey(**invalid_update_data)
+        PasswordResetRequestModel(**invalid_reset_data)
 
 
 def test_task_completion_notification_model():
