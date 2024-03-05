@@ -1,5 +1,6 @@
 from docx import Document
 from abc import ABC, abstractmethod
+import fitz
 import io
 
 
@@ -30,11 +31,12 @@ class ParserFactory:
         Raises:
             NotImplementedError: If the file extension is not supported.
         """
-
         if self.file_extension == "docx":
             return DocxParser(self.file_like_object)
         elif self.file_extension == "txt":
             return TxtParser(self.file_like_object)
+        elif self.file_extension == "pdf":
+            return PDFParser(self.file_like_object)
         else:
             raise NotImplementedError
 
@@ -92,3 +94,36 @@ class TxtParser(Parser):
             str: The parsed text content of the .txt file.
         """
         return self.file_like_object.decode()
+
+class PDFParser(Parser):
+    """
+    Parser class for .txt files.
+    """
+
+    def read(self):
+        """
+        Read and parse the content of a .pdf file.
+
+        Returns:
+            str: The parsed text content of the .pdf file.
+        """
+        """
+        Read and parse the content of a .pdf file.
+
+        Returns:
+            str: The parsed text content of the .pdf file.
+        """
+        file_stream = self.file_like_object  # Assuming this is a file-like object
+        # Open the PDF file
+        doc = fitz.open(stream=file_stream, filetype="pdf")
+        text = ""
+        # Iterate through each page of the PDF
+        for page in doc:
+            # Extract text from the page and add it to the text variable
+            text += page.get_text()
+
+        # Close the document after reading
+        doc.close()
+        
+        return text
+

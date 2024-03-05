@@ -1,6 +1,6 @@
 import unittest
 from io import BytesIO
-from backend.parser import ParserFactory, DocxParser, TxtParser
+from backend.parser import ParserFactory, DocxParser, TxtParser, PDFParser
 
 
 def open_file_binary_str(file_path: str):
@@ -26,7 +26,7 @@ class TestParserFactory(unittest.TestCase):
 
     def test_build_unsupported_extension(self):
         file_like_object = BytesIO(b"")
-        file_extension = "pdf"
+        file_extension = "poiuy"
         factory = ParserFactory(file_like_object, file_extension)
         with self.assertRaises(NotImplementedError):
             parser = factory.build()
@@ -46,6 +46,15 @@ class TestDocxParser(unittest.TestCase):
     def test_parse_docx(self):
         file_like_object = open_file_binary_str("unit_tests/test.docx")
         file_extension = "docx"
+        factory = ParserFactory(file_like_object, file_extension)
+        parser = factory.build()
+        text = parser.read().strip()
+        assert text == "Hello"
+
+class TestPDFParser(unittest.TestCase):
+    def test_parse_pdf(self):
+        file_like_object = open_file_binary_str("unit_tests/test.pdf")
+        file_extension = "pdf"
         factory = ParserFactory(file_like_object, file_extension)
         parser = factory.build()
         text = parser.read().strip()
