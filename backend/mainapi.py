@@ -336,7 +336,9 @@ class Application:
                     )
             else:
                 user_openai_key = current_user.user_openai_key
-            task_id = self.celery_application.run_generate_task(user_openai_key, read_docs)
+            task_id = self.celery_application.run_generate_task(
+                user_openai_key, read_docs
+            )
             user_task = UserTasks(
                 user_email=current_user.user_email,
                 user_task_id=task_id,
@@ -368,7 +370,7 @@ class Application:
                 raise HTTPException(
                     status_code=401, detail="Notification request unauthorised"
                 )
-            task = UserTasks.objects(task_id=notify_task.task_id).first()
+            task = UserTasks.objects(user_task_id=notify_task.task_id).first()
             if task is None:
                 raise HTTPException(status_code=404, detail="Task not found")
             task.update(
@@ -394,7 +396,7 @@ class Application:
                 dict: Summary of the specified task.
             """
             task = UserTasks.objects(
-                user_email=current_user.user_email, task_id=task_id
+                user_email=current_user.user_email, user_task_id=task_id
             ).first()
             if task is None:
                 raise HTTPException(
@@ -486,9 +488,7 @@ class Application:
     def get_app(self):
         return self.app
 
-
-if __name__ == "__main__":
-    app = (
+app = (
         Application(
             FastAPI(),
             custom_middleware,
@@ -499,5 +499,7 @@ if __name__ == "__main__":
         .build_application()
         .add_routes()
         .get_app()
-    )
+)
+
+if __name__ == "__main__":
     uvicorn.run("mainapi:app", reload=True)

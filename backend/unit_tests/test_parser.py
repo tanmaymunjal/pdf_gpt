@@ -34,7 +34,7 @@ class TestParserFactory(unittest.TestCase):
 
 class TestTxtParser(unittest.TestCase):
     def test_parse_txt(self):
-        file_like_object = open_file_binary_str("tests/test.txt")
+        file_like_object = open_file_binary_str("unit_tests/test.txt")
         file_extension = "txt"
         factory = ParserFactory(file_like_object, file_extension)
         parser = factory.build()
@@ -44,7 +44,7 @@ class TestTxtParser(unittest.TestCase):
 
 class TestDocxParser(unittest.TestCase):
     def test_parse_docx(self):
-        file_like_object = open_file_binary_str("tests/test.docx")
+        file_like_object = open_file_binary_str("unit_tests/test.docx")
         file_extension = "docx"
         factory = ParserFactory(file_like_object, file_extension)
         parser = factory.build()

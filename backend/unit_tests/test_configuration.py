@@ -3,7 +3,7 @@ import pytest
 from backend.configuration import SingletonConfiguration
 import configparser
 
-TEST_CONFIGURATION_PATH = "tests/test_config.ini"
+TEST_CONFIGURATION_PATH = "unit_tests/test_config.ini"
 
 
 def test_singleton_instance():

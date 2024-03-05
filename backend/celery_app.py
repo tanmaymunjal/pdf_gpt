@@ -85,4 +85,6 @@ class CeleryApplication:
             "celery_app.generate_summary_celery_task",
             kwargs={"user_openai_key": user_openai_key, "read_docs": read_docs},
         ).id
+
+
 celery_application = CeleryApplication(celery_app).enable_app()

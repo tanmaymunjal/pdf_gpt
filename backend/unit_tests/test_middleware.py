@@ -1,4 +1,3 @@
-import pytest
 from fastapi import FastAPI, Request
 from starlette.responses import Response
 from starlette.testclient import TestClient
@@ -6,16 +5,16 @@ from unittest.mock import AsyncMock, MagicMock
 from backend.middleware import CustomMiddleware
 from backend.mainapi import Application
 from backend.celery_app import celery_application
+from backend.configuration import global_config
+from mongoengine import disconnect
 import time
 
-
-@pytest.mark.asyncio
-async def test_custom_middleware():
+def test_custom_middleware():
     logger_mock = MagicMock()
 
     custom_middleware = CustomMiddleware(logger_mock).generate_middleware()
     app = (
-        Application(FastAPI(), custom_middleware, "test_db", ["*"], celery_application)
+        Application(FastAPI(), custom_middleware , global_config["Application"]["DB"],["*"],celery_application)
         .build_application()
         .add_routes()
         .get_app()

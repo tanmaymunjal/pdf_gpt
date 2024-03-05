@@ -1,43 +1,31 @@
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
-from backend.mainapi import Application
 from backend.models import PotentialUser, User
-from backend.middleware import custom_middleware
-from backend.celery_app import celery_application
 from backend.configuration import global_config
-from mongoengine import disconnect, connect
 from datetime import datetime, timedelta
 import jwt
 import pytest
 from unittest.mock import patch
 import time
+from mongoengine import connect,disconnect
+import requests
 
 global_data = {}
 
 @pytest.fixture(scope="module")
 def setup_app():
-    db = connect("test_db")
-    db.drop_database("test_db")
-    app = (
-        Application(FastAPI(), custom_middleware, "test_db", ["*"],celery_application)
-        .build_application()
-        .add_routes()
-        .get_app()
-    )
-    client = TestClient(app)
-    yield client  # Provide the client to the tests
+    db = connect(global_config["Application"]["DB"])
+    db.drop_database(global_config["Application"]["DB"])
+    yield 
     disconnect()
 
-
 def test_example(setup_app):
-    response = setup_app.get("/")
+    response = requests.get(f"{global_config['Application']['API_GATEWAY']}/")
     assert response.status_code == 200
     assert response.json() == {"message": "Service is up!"}
 
 
 def test_register_user(setup_app):
-    response = setup_app.post(
-        "/user/register/password",
+    response = requests.post(
+        f"{global_config['Application']['API_GATEWAY']}/user/register/password",
         json={
             "user_email": "testuser@example.com",
             "user_name": "Test User",
@@ -54,8 +42,8 @@ def test_verify_user_otp(setup_app):
     mock_otp = str(
         PotentialUser.objects(user_email="testuser@example.com").first().user_otp_sent
     )
-    response = setup_app.post(
-        "/user/register/verify",
+    response = requests.post(
+        f"{global_config['Application']['API_GATEWAY']}/user/register/verify",
         json={"user_email": "testuser@example.com", "otp": mock_otp},
     )
     assert response.status_code == 200
@@ -69,7 +57,7 @@ def test_login_user(setup_app):
         "user_email": "testuser@example.com",
         "user_password": "securepassword",
     }
-    response = setup_app.post("/user/login/password", json=login_data)
+    response = requests.post(f"{global_config['Application']['API_GATEWAY']}/user/login/password", json=login_data)
     assert response.status_code == 200
     assert "jwt_token" in response.json()
     jwt_token = response.json()["jwt_token"]
@@ -82,8 +70,8 @@ def test_login_user(setup_app):
 
 
 def test_generate_refresh_token(setup_app):
-    response = setup_app.post(
-        "/user/auth/refresh_token", params={"token": global_data["jwt_token"]}
+    response = requests.post(
+        f"{global_config['Application']['API_GATEWAY']}/user/auth/refresh_token", params={"token": global_data["jwt_token"]}
     )
     assert response.status_code == 200
     assert "refresh_token" in response.json()
@@ -96,8 +84,8 @@ def test_generate_refresh_token(setup_app):
 
 
 def test_reset_password_request(setup_app):
-    response = setup_app.post(
-        "/user/auth/forgot_password", params={"user_email": "testuser@example.com"}
+    response = requests.post(
+        f"{global_config['Application']['API_GATEWAY']}/user/auth/forgot_password", params={"user_email": "testuser@example.com"}
     )
     assert response.status_code == 200
     data = response.json()
@@ -108,8 +96,8 @@ def test_reset_password_request(setup_app):
 def test_generate_summary_unsupported_file_type(setup_app):
     test_file_name = "unsupported_file.kpgfy'"
 
-    response = setup_app.post(
-        "/generate_summary",
+    response = requests.post(
+        f"{global_config['Application']['API_GATEWAY']}/generate_summary",
         params={"token": global_data["jwt_token"]},
         files={"file": (test_file_name, b"PDF content, which is unsupported.")},
     )
@@ -120,9 +108,9 @@ def test_generate_summary_unsupported_file_type(setup_app):
 
 def test_generate_summary(setup_app):
 
-    with open("tests/test.txt", "rb") as f:
-        response = setup_app.post(
-            "/generate_summary",
+    with open("unit_tests/test.txt", "rb") as f:
+        response = requests.post(
+            f"{global_config['Application']['API_GATEWAY']}/generate_summary",
             params={"token": global_data["jwt_token"]},
             files={"file": ("test.txt", f)},
         )
@@ -136,8 +124,8 @@ def test_generate_summary(setup_app):
 
 def test_pending_tasks(setup_app):
     # The setup_tasks should ensure there are pending tasks for the user
-    response = setup_app.get(
-        "/user/pending_tasks", params={"token": global_data["jwt_token"]}
+    response = requests.get(
+        f"{global_config['Application']['API_GATEWAY']}/user/pending_tasks", params={"token": global_data["jwt_token"]}
     )
     assert response.status_code == 200
     tasks = response.json()["pending_tasks"]
@@ -146,42 +134,42 @@ def test_pending_tasks(setup_app):
     assert all(task["user_task_status"] == "PENDING" for task in tasks)
 
 
-# @pytest.mark.slow
-# def test_completed_task_and_summary(setup_app):
-#     # sleep for 120 seconds for task to complete
-#     time.sleep(5)
-#     response = setup_app.get(
-#         "/user/completed_tasks", params={"token": global_data["jwt_token"]}
-#     )
-#     assert response.status_code == 200
-#     completed_tasks = response.json()["completed_tasks"]
-#     assert len(completed_tasks) > 0  # Ensure there is at least one completed task
+@pytest.mark.slow
+def test_completed_task_and_summary(setup_app):
+    # sleep for 10 seconds for task to complete
+    time.sleep(10)
+    response = requests.get(
+        f"{global_config['Application']['API_GATEWAY']}/user/completed_tasks", params={"token": global_data["jwt_token"]}
+    )
+    assert response.status_code == 200
+    completed_tasks = response.json()["completed_tasks"]
+    assert len(completed_tasks) > 0  # Ensure there is at least one completed task
 
-#     # Step 2: Select a completed task and use its task_id to fetch the summary
-#     task_id = completed_tasks[0][
-#         "task_id"
-#     ]  # Assuming there's at least one completed task and it has a task_id
-#     response = client.get(
-#         f"/user/get_summary",
-#         params={"token": global_data["jwt_token"], "task_id": task_id},
-#     )
-#     assert response.status_code == 200
-#     summary_data = response.json()
-#     assert summary_data["message"] == "Task completed succesfully"
-#     assert "result" in summary_data  # Ensure the summary data includes a 'result' key
+    # Step 2: Select a completed task and use its task_id to fetch the summary
+    task_id = completed_tasks[0][
+        "user_task_id"
+    ]  # Assuming there's at least one completed task and it has a task_id
+    response = requests.get(
+        f"{global_config['Application']['API_GATEWAY']}/user/get_summary",
+        params={"token": global_data["jwt_token"], "task_id": task_id},
+    )
+    assert response.status_code == 200
+    summary_data = response.json()
+    assert summary_data["message"] == "Task completed succesfully"
+    assert "result" in summary_data  # Ensure the summary data includes a 'result' key
 
-#     # Verify that the task_id used is indeed from a completed task
-#     assert (
-#         summary_data.get("status", None) != "PENDING"
-#     )  # The task status should not be PENDING
+    # Verify that the task_id used is indeed from a completed task
+    assert (
+        summary_data.get("status", None) != "PENDING"
+    )  # The task status should not be PENDING
 
 
 def test_update_openai_key(setup_app):
 
     user_email = "testuser@example.com"
     new_openai_api_key = "newkey123456"
-    response = setup_app.post(
-        "/user/update_key",
+    response = requests.post(
+        f"{global_config['Application']['API_GATEWAY']}/user/update_key",
         params={
             "token": global_data["jwt_token"],
             "openai_api_key": new_openai_api_key,
@@ -205,8 +193,8 @@ def test_reset_password(setup_app):
         User.objects(user_email=user_email).first().user_password_recovery_request.otp
     )
 
-    response = setup_app.post(
-        "/user/auth/reset_password",
+    response = requests.post(
+        f"{global_config['Application']['API_GATEWAY']}/user/auth/reset_password",
         json={
             "user_email": user_email,
             "user_otp": user_otp,
@@ -223,19 +211,19 @@ def test_reset_password(setup_app):
         "user_email": "testuser@example.com",
         "user_password": "newsecurepassword",
     }
-    response = setup_app.post("/user/login/password", json=login_data)
+    response = requests.post(f"{global_config['Application']['API_GATEWAY']}/user/login/password", json=login_data)
     assert response.status_code == 200
 
-    response = setup_app.post(
-        "/user/auth/refresh_token", params={"token": global_data["jwt_token"]}
+    response = requests.post(
+        f"{global_config['Application']['API_GATEWAY']}/user/auth/refresh_token", params={"token": global_data["jwt_token"]}
     )
     assert response.status_code == 401
 
 
 def test_resend_otp(setup_app):
     user_email = "newtestuser@example.com"
-    response = setup_app.post(
-        "/user/register/password",
+    response = requests.post(
+        f"{global_config['Application']['API_GATEWAY']}/user/register/password",
         json={
             "user_email": user_email,
             "user_name": "Test User",
@@ -244,8 +232,8 @@ def test_resend_otp(setup_app):
     )
     curr_otp = PotentialUser.objects(user_email=user_email).first().user_otp_sent
     assert response.status_code == 200
-    response = setup_app.post(
-        "/user/register/resend_otp", params={"user_email": user_email}
+    response = requests.post(
+        f"{global_config['Application']['API_GATEWAY']}/user/register/resend_otp", params={"user_email": user_email}
     )
     assert response.status_code == 200
     data = response.json()
