@@ -3,22 +3,23 @@ from fastapi import FastAPI
 from backend.mainapi import Application
 from backend.models import PotentialUser, User
 from backend.middleware import custom_middleware
+from backend.celery_app import celery_application
 from backend.configuration import global_config
 from mongoengine import disconnect, connect
 from datetime import datetime, timedelta
 import jwt
 import pytest
+from unittest.mock import patch
 import time
 
 global_data = {}
-
 
 @pytest.fixture(scope="module")
 def setup_app():
     db = connect("test_db")
     db.drop_database("test_db")
     app = (
-        Application(FastAPI(), custom_middleware, "test_db", ["*"])
+        Application(FastAPI(), custom_middleware, "test_db", ["*"],celery_application)
         .build_application()
         .add_routes()
         .get_app()

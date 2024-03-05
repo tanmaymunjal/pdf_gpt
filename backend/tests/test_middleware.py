@@ -5,6 +5,7 @@ from starlette.testclient import TestClient
 from unittest.mock import AsyncMock, MagicMock
 from backend.middleware import CustomMiddleware
 from backend.mainapi import Application
+from backend.celery_app import celery_application
 import time
 
 
@@ -13,9 +14,8 @@ async def test_custom_middleware():
     logger_mock = MagicMock()
 
     custom_middleware = CustomMiddleware(logger_mock).generate_middleware()
-
     app = (
-        Application(FastAPI(), custom_middleware, "test_db", ["*"])
+        Application(FastAPI(), custom_middleware, "test_db", ["*"], celery_application)
         .build_application()
         .add_routes()
         .get_app()

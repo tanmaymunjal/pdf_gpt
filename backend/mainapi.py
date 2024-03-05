@@ -25,17 +25,18 @@ from backend.models import User, PotentialUser, PasswordRecoveryRequest, UserTas
 from datetime import datetime, timedelta
 from backend.password_hasher import PasswordHasher
 from backend.middleware import custom_middleware
-from backend.celery_app import generate_summary_celery_task
+from backend.celery_app import celery_application
 from backend.parser import ParserFactory
 from backend.db import connect_to_db
 
 
 class Application:
-    def __init__(self, app, middleware, db_uri, cors_origins):
+    def __init__(self, app, middleware, db_uri, cors_origins, celery_application):
         self.app = app
         self.middleware = middleware
         self.db_uri = db_uri
         self.cors_origins = cors_origins
+        self.celery_application = celery_application
 
     def build_application(self):
         self.app.middleware("http")(self.middleware)
@@ -335,9 +336,7 @@ class Application:
                     )
             else:
                 user_openai_key = current_user.user_openai_key
-            task_id = generate_summary_celery_task.delay(
-                user_openai_key, read_docs
-            ).task_id
+            task_id = self.celery_application.run_generate_task(user_openai_key, read_docs)
             user_task = UserTasks(
                 user_email=current_user.user_email,
                 user_task_id=task_id,
@@ -491,7 +490,11 @@ class Application:
 if __name__ == "__main__":
     app = (
         Application(
-            FastAPI(), custom_middleware, global_config["Application"]["DB"], ["*"]
+            FastAPI(),
+            custom_middleware,
+            global_config["Application"]["DB"],
+            ["*"],
+            celery_application,
         )
         .build_application()
         .add_routes()
