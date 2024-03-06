@@ -22,14 +22,14 @@ python -m venv venv```
 
 ii) Activate the [virtual environment](https://python.land/virtual-environments/virtualenv) 
 
-iii) Setup the backend repo dependencies by running the ``` 
+iii) Setup the backend python dependencies by running the ``` 
 python setup.py install``` in PDF GPT repository.
 
 iv) Follow the [rabbitmq install](https://www.rabbitmq.com/docs/download) to setup rabbitmq on your computer. 
 
 v) Create a rabbit mq user that you will use to authenticate requests to rabbit mq. For more details, check out [rabbitmq authentication guide](https://www.rabbitmq.com/docs/access-control).
 
-vi) Configure the application by creating a config.ini file in the backend, the format for the file should be
+vi) Configure the application by creating a config.ini file in the backend folder, the format for the file should be
 ``` 
 [OpenAI]
 API_KEY=
@@ -59,7 +59,8 @@ Furthermore, the notification API key is a custom secure API key used to authent
 
 A celery broker URL will be needed to authenticate the user that you created earlier. Other useful parameters such as the OpenAI model used, otp length, otp expiry, salt length, etc. 
 
-vii) Enter the backend folder in the PDF GPT repository and run the command  ``` celery -A celery_app worker --loglevel=info``` \
+vii) Enter the backend folder in the PDF GPT repository and run the command  ``` celery -A celery_app worker --loglevel=info``` 
+
 viii) Open a new terminal screen, activate the virtual environment in it, enter the backend folder,and run the command ```python3 mainapi.py``` in it.
 
 **Note:** The API would still work if you do not turn on the celery worker, but none of the summarisation jobs will ever complete and will be in a perpetual state of pending.
