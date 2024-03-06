@@ -15,19 +15,19 @@ You would need to install nodejs and python to setup the project. You can follow
 
 ### Setting up the Backend
 
-To setup the backend part of the application, you can follow the following steps :- \
+To setup the backend part of the application, you can follow the following steps :- 
 
 i) Setup a python virtual environment using ``` 
-python -m venv venv``` \
+python -m venv venv``` 
 
-ii) Activate the [virtual environment](https://python.land/virtual-environments/virtualenv) \
+ii) Activate the [virtual environment](https://python.land/virtual-environments/virtualenv) 
 
 iii) Setup the backend repo dependencies by running the ``` 
-python setup.py install``` in PDF GPT repository.\
+python setup.py install``` in PDF GPT repository.
 
-iv) Follow the [rabbitmq install](https://www.rabbitmq.com/docs/download) to setup rabbitmq on your computer. \
+iv) Follow the [rabbitmq install](https://www.rabbitmq.com/docs/download) to setup rabbitmq on your computer. 
 
-v) Create a rabbit mq user that you will use to authenticate requests to rabbit mq. For more details, check out [rabbitmq authentication guide](https://www.rabbitmq.com/docs/access-control).\
+v) Create a rabbit mq user that you will use to authenticate requests to rabbit mq. For more details, check out [rabbitmq authentication guide](https://www.rabbitmq.com/docs/access-control).
 
 vi) Configure the application by creating a config.ini file in the backend, the format for the file should be
 ``` 
@@ -52,7 +52,11 @@ API_KEY=
 BROKER=
 ``` 
 Many of these parameters are given as useful defaults but do note that all of these parameters are configurable. The meaning of most of these is quite clear from their name and placement.  
-PDF GPT integrates with the OpenAI and SendGrid and you would need to provide authentication credentials for both of them in the configuration. Furthermore, the notification API key is a custom secure API key used to authenticate celery workers and can be set to anything as long as you deem it a sufficiently safe key. Similarly, the jwt secret will be a secret key used to authenticate and create jwt tokens.\
+
+PDF GPT integrates with the OpenAI and SendGrid and you would need to provide authentication credentials for both of them in the configuration. 
+
+Furthermore, the notification API key is a custom secure API key used to authenticate celery workers and can be set to anything as long as you deem it a sufficiently safe key. Similarly, the jwt secret will be a secret key used to authenticate and create jwt tokens.
+
 A celery broker URL will be needed to authenticate the user that you created earlier. Other useful parameters such as the OpenAI model used, otp length, otp expiry, salt length, etc. 
 
 vii) Enter the backend folder in the PDF GPT repository and run the command  ``` celery -A celery_app worker --loglevel=info``` \
