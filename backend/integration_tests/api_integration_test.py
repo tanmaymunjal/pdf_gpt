@@ -5,17 +5,19 @@ import jwt
 import pytest
 from unittest.mock import patch
 import time
-from mongoengine import connect,disconnect
+from mongoengine import connect, disconnect
 import requests
 
 global_data = {}
+
 
 @pytest.fixture(scope="module")
 def setup_app():
     db = connect(global_config["Application"]["DB"])
     db.drop_database(global_config["Application"]["DB"])
-    yield 
+    yield
     disconnect()
+
 
 def test_example(setup_app):
     response = requests.get(f"{global_config['Application']['API_GATEWAY']}/")
@@ -57,7 +59,10 @@ def test_login_user(setup_app):
         "user_email": "testuser@example.com",
         "user_password": "securepassword",
     }
-    response = requests.post(f"{global_config['Application']['API_GATEWAY']}/user/login/password", json=login_data)
+    response = requests.post(
+        f"{global_config['Application']['API_GATEWAY']}/user/login/password",
+        json=login_data,
+    )
     assert response.status_code == 200
     assert "jwt_token" in response.json()
     jwt_token = response.json()["jwt_token"]
@@ -71,7 +76,8 @@ def test_login_user(setup_app):
 
 def test_generate_refresh_token(setup_app):
     response = requests.post(
-        f"{global_config['Application']['API_GATEWAY']}/user/auth/refresh_token", params={"token": global_data["jwt_token"]}
+        f"{global_config['Application']['API_GATEWAY']}/user/auth/refresh_token",
+        params={"token": global_data["jwt_token"]},
     )
     assert response.status_code == 200
     assert "refresh_token" in response.json()
@@ -85,7 +91,8 @@ def test_generate_refresh_token(setup_app):
 
 def test_reset_password_request(setup_app):
     response = requests.post(
-        f"{global_config['Application']['API_GATEWAY']}/user/auth/forgot_password", params={"user_email": "testuser@example.com"}
+        f"{global_config['Application']['API_GATEWAY']}/user/auth/forgot_password",
+        params={"user_email": "testuser@example.com"},
     )
     assert response.status_code == 200
     data = response.json()
@@ -125,7 +132,8 @@ def test_generate_summary(setup_app):
 def test_pending_tasks(setup_app):
     # The setup_tasks should ensure there are pending tasks for the user
     response = requests.get(
-        f"{global_config['Application']['API_GATEWAY']}/user/pending_tasks", params={"token": global_data["jwt_token"]}
+        f"{global_config['Application']['API_GATEWAY']}/user/pending_tasks",
+        params={"token": global_data["jwt_token"]},
     )
     assert response.status_code == 200
     tasks = response.json()["pending_tasks"]
@@ -139,7 +147,8 @@ def test_completed_task_and_summary(setup_app):
     # sleep for 10 seconds for task to complete
     time.sleep(10)
     response = requests.get(
-        f"{global_config['Application']['API_GATEWAY']}/user/completed_tasks", params={"token": global_data["jwt_token"]}
+        f"{global_config['Application']['API_GATEWAY']}/user/completed_tasks",
+        params={"token": global_data["jwt_token"]},
     )
     assert response.status_code == 200
     completed_tasks = response.json()["completed_tasks"]
@@ -211,11 +220,15 @@ def test_reset_password(setup_app):
         "user_email": "testuser@example.com",
         "user_password": "newsecurepassword",
     }
-    response = requests.post(f"{global_config['Application']['API_GATEWAY']}/user/login/password", json=login_data)
+    response = requests.post(
+        f"{global_config['Application']['API_GATEWAY']}/user/login/password",
+        json=login_data,
+    )
     assert response.status_code == 200
 
     response = requests.post(
-        f"{global_config['Application']['API_GATEWAY']}/user/auth/refresh_token", params={"token": global_data["jwt_token"]}
+        f"{global_config['Application']['API_GATEWAY']}/user/auth/refresh_token",
+        params={"token": global_data["jwt_token"]},
     )
     assert response.status_code == 401
 
@@ -233,7 +246,8 @@ def test_resend_otp(setup_app):
     curr_otp = PotentialUser.objects(user_email=user_email).first().user_otp_sent
     assert response.status_code == 200
     response = requests.post(
-        f"{global_config['Application']['API_GATEWAY']}/user/register/resend_otp", params={"user_email": user_email}
+        f"{global_config['Application']['API_GATEWAY']}/user/register/resend_otp",
+        params={"user_email": user_email},
     )
     assert response.status_code == 200
     data = response.json()

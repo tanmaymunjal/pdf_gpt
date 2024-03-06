@@ -76,14 +76,24 @@ class Application:
             if otp != 0:
                 password_hasher = PasswordHasher(user.user_password)
                 salt, user_hashed_password = password_hasher.hash_password()
-                potential_user = PotentialUser(
-                    user_email=user.user_email,
-                    user_name=user.user_name,
-                    user_hashed_password=user_hashed_password,
-                    user_salt=salt,
-                    user_otp_sent=otp,
-                )
-                potential_user.save()
+                potential_user = PotentialUser.objects(
+                    user_email=user.user_email
+                ).first()
+                if potential_user is None:
+                    potential_user = PotentialUser(
+                        user_email=user.user_email,
+                        user_name=user.user_name,
+                        user_hashed_password=user_hashed_password,
+                        user_salt=salt,
+                        user_otp_sent=otp,
+                    )
+                    potential_user.save()
+                else:
+                    potential_user.update(
+                        set__user_hashed_password=user_hashed_password,
+                        set__user_salt=salt,
+                        set__user_otp_sent=otp,
+                    )
                 return {
                     "message": "OTP verification sent successfully!",
                     "expiry_in": global_config["Application"]["OTP_EXPIRY_TIME"],
@@ -488,17 +498,18 @@ class Application:
     def get_app(self):
         return self.app
 
+
 app = (
-        Application(
-            FastAPI(),
-            custom_middleware,
-            global_config["Application"]["DB"],
-            ["*"],
-            celery_application,
-        )
-        .build_application()
-        .add_routes()
-        .get_app()
+    Application(
+        FastAPI(),
+        custom_middleware,
+        global_config["Application"]["DB"],
+        ["*"],
+        celery_application,
+    )
+    .build_application()
+    .add_routes()
+    .get_app()
 )
 
 if __name__ == "__main__":

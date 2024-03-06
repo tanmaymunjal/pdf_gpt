@@ -2,17 +2,38 @@
 import { useState, FormEvent } from "react";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 export default function OTPSceen() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-
+  const searchParams = useSearchParams();
   const FormDataSchema = z.object({
     otp: z.string().length(6),
+    user_email: z.string().email(),
   });
 
+  async function resentOTP() {
+    const user_email = searchParams.get("user_email");
+    await fetch(
+      process.env.NEXT_PUBLIC_API_HOST +
+        "/user/register/resend_otp?user_email=" +
+        user_email,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    ).then((res) => {
+      if (res.status != 200) {
+        setError("Server processing error, please retry later!");
+      }
+    });
+  }
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     const formData = new FormData(event.currentTarget);
     const formDataJson: object = {};
 
@@ -20,35 +41,30 @@ export default function OTPSceen() {
       formDataJson[key] = value;
     }
 
+    formDataJson.user_email = searchParams.get("user_email");
+    console.log(formDataJson);
     const formDataValidation = FormDataSchema.safeParse(formDataJson);
     if (!formDataValidation.success) {
       const error = formDataValidation.error.issues[0];
       setError(error.path[0] + ": " + error.message);
     } else {
-      await fetch(
-        process.env.NEXT_PUBLIC_API_HOST + "/user/register/password",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formDataJson),
+      await fetch(process.env.NEXT_PUBLIC_API_HOST + "/user/register/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      )
-        .then((res) => {
-          if (res.status == 200) {
-            res.json();
-          } else {
-            throw new Error();
-          }
-        })
-        .then((data) => {
-          console.log(data);
-          router.push("/otp_screen");
-        })
-        .catch((_) => {
+        body: JSON.stringify(formDataJson),
+      }).then((res) => {
+        if (res.status == 200) {
+          let data = res.json();
+          localStorage.setItem("jwt_token", data.jwt_token);
+          router.push("/main");
+        } else if (res.status == 410) {
+          setError("Your otp has expired, please get a new one and re-submit!");
+        } else {
           setError("Server processing error, please retry later!");
-        });
+        }
+      });
     }
   }
 
@@ -120,6 +136,15 @@ export default function OTPSceen() {
             </div>
           </form>
         </div>
+        <p className="mt-10 text-center text-sm text-gray-500 text-lg">
+          Forogt OTP?{" "}
+          <a
+            onClick={resentOTP}
+            className="mx-2 font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
+          >
+            Resend
+          </a>
+        </p>
       </div>
     </>
   );

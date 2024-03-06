@@ -9,12 +9,19 @@ from backend.configuration import global_config
 from mongoengine import disconnect
 import time
 
+
 def test_custom_middleware():
     logger_mock = MagicMock()
 
     custom_middleware = CustomMiddleware(logger_mock).generate_middleware()
     app = (
-        Application(FastAPI(), custom_middleware , global_config["Application"]["DB"],["*"],celery_application)
+        Application(
+            FastAPI(),
+            custom_middleware,
+            global_config["Application"]["DB"],
+            ["*"],
+            celery_application,
+        )
         .build_application()
         .add_routes()
         .get_app()

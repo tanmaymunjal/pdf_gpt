@@ -44,9 +44,8 @@ export default function RegisterPage() {
             throw new Error();
           }
         })
-        .then((data) => {
-          console.log(data);
-          router.push("/otp_screen");
+        .then((_) => {
+          router.push("/otp_screen?user_email=" + formDataJson.user_email);
         })
         .catch((_) => {
           setError("Server processing error, please retry later!");

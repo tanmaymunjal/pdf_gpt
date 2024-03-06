@@ -1,42 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Home() {
   const [file, setFile] = useState<File>();
-  const [summary, setSummary] = useState<String>("");
-
-  const generateSummary = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!file) return;
-    try {
-      const data = new FormData();
-      data.set("file", file);
-
-      await fetch(process.env.NEXT_PUBLIC_API_HOST + "/generate_summary", {
-        method: "POST",
-        body: data,
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setSummary(data.summary);
-        })
-        .catch((e) => {
-          throw new Error(e.message);
-        });
-      // handle the error
-    } catch (e: any) {
-      // Handle errors here
-      console.error(e);
-    }
-  };
+  const [tasks, setTasks] = useState([{}]);
+  useEffect(() => {
+    setTasks([{ task_id: 1, task_status: "Suceeded" }]);
+  }, []);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <form onSubmit={generateSummary}>
+    <main className="flex flex-col items-center justify-between p-24">
+      <form className="mb-8">
         <input
           type="file"
-          className="file-input file-input-bordered w-full max-w-xs"
+          className="file-input file-input-bordered"
           id="fileInput"
           onChange={(e) => setFile(e.target.files?.[0])}
         />
@@ -44,14 +22,31 @@ export default function Home() {
         <br />
         <input type="submit" className="btn btn-info" value="Submit" />
       </form>
-      {summary != "" && (
-        <div>
-          <br />
-          <br />
-          <p> Generated Summary: </p>
-          <p> {summary}</p>
-        </div>
-      )}
+      <table className="table table-zebra border border-slate-500">
+        <thead>
+          <tr className="border border-slate-600">
+            <th>Task ID</th>
+            <th>Task Status</th>
+            <th>Task Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {tasks.map((item, _) => (
+            <tr key={item.task_id} className="border border-slate-600">
+              <td>{item.task_id}</td>
+              <td>{item.task_status}</td>
+              <td
+                onClick={() => {
+                  console.log(1);
+                }}
+                className="font-medium text-blue-600 underline dark:text-blue-500 hover:no-underline"
+              >
+                View Task Result
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </main>
   );
 }

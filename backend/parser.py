@@ -95,6 +95,7 @@ class TxtParser(Parser):
         """
         return self.file_like_object.decode()
 
+
 class PDFParser(Parser):
     """
     Parser class for .txt files.
@@ -124,6 +125,5 @@ class PDFParser(Parser):
 
         # Close the document after reading
         doc.close()
-        
-        return text
 
+        return text

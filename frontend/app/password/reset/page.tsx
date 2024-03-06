@@ -8,7 +8,6 @@ export default function LoginPage() {
   const router = useRouter();
   const FormDataSchema = z.object({
     user_email: z.string().email(),
-    user_password: z.string().min(8).max(16),
   });
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -26,17 +25,21 @@ export default function LoginPage() {
       const error = formDataValidation.error.issues[0];
       setError(error.path[0] + ": " + error.message);
     } else {
-      await fetch(process.env.NEXT_PUBLIC_API_HOST + "/user/login/password", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      await fetch(
+        process.env.NEXT_PUBLIC_API_HOST +
+          "/user/auth/forgot_password?" +
+          new URLSearchParams({
+            user_email: formDataJson.user_email,
+          }),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-        body: JSON.stringify(formDataJson),
-      }).then((res) => {
+      ).then((res) => {
         if (res.status == 200) {
-          let data = res.json();
-          localStorage.setItem("jwt_token", data.jwt_token);
-          router.push("/main");
+          router.push("/password/new?user_email=" + formDataJson.user_email);
         } else {
           setError("Server processing error, please retry later!");
         }
@@ -78,7 +81,7 @@ export default function LoginPage() {
             </div>
           )}
           <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-slate-50">
-            Sign in to your account
+            Password Reset
           </h2>
         </div>
 
@@ -104,40 +107,11 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between">
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium leading-6 text-slate-50"
-                >
-                  Password
-                </label>
-                <div className="text-sm">
-                  <a
-                    href="/password/reset"
-                    className="font-semibold text-slate-50 hover:text-indigo-500"
-                  >
-                    Forgot password?
-                  </a>
-                </div>
-              </div>
-              <div className="mt-2">
-                <input
-                  id="user_password"
-                  name="user_password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="block w-full rounded-md border-0 py-1.5 text-slate-50 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-
-            <div>
               <button
                 type="submit"
                 className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
-                Sign in
+                Send OTP
               </button>
             </div>
           </form>

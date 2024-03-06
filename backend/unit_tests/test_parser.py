@@ -51,6 +51,7 @@ class TestDocxParser(unittest.TestCase):
         text = parser.read().strip()
         assert text == "Hello"
 
+
 class TestPDFParser(unittest.TestCase):
     def test_parse_pdf(self):
         file_like_object = open_file_binary_str("unit_tests/test.pdf")
