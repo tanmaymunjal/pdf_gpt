@@ -47,9 +47,10 @@ export default function LoginPage() {
         },
       ).then((res) => {
         if (res.status == 200) {
-          let data = res.json();
-          localStorage.setItem("jwt_token", data.jwt_token);
-          router.push("/main");
+          res.json().then((data) => {
+            localStorage.setItem("jwt_token", data.jwt_token);
+            router.push("/main");
+          });
         } else {
           setError("Server processing error, please retry later!");
         }
@@ -118,7 +119,7 @@ export default function LoginPage() {
                 htmlFor="password"
                 className="block text-sm font-medium leading-6 text-slate-50 mt-2"
               >
-                Password
+                New Password
               </label>
               <div className="mt-1">
                 <input
@@ -153,7 +154,7 @@ export default function LoginPage() {
                 type="submit"
                 className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
-                Reset Password
+                Confirm Password
               </button>
             </div>
           </form>

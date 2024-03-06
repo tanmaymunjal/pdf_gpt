@@ -20,6 +20,7 @@ docutils==0.20.1
 exceptiongroup==1.2.0
 fastapi==0.109.2
 flower==2.0.1
+freezegun==1.4.0
 h11==0.14.0
 httpcore==1.0.3
 httpx==0.26.0
@@ -38,7 +39,7 @@ mypy-extensions==1.0.0
 openai==1.12.0
 packaging==23.2
 pathspec==0.12.1
-PDF_GPT==0.0.1
+PDF-GPT==0.0.1
 pillow==10.2.0
 platformdirs==4.2.0
 pluggy==1.4.0
@@ -49,7 +50,7 @@ pydantic_core==2.16.2
 Pygments==2.17.2
 PyJWT==2.8.0
 pymongo==4.6.1
-PyMuPDF==1.23.26
+PyMuPDF==1.22.5
 PyMuPDFb==1.23.22
 pytest==8.0.1
 pytest-asyncio==0.23.5

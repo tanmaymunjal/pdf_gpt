@@ -34,9 +34,10 @@ export default function LoginPage() {
         body: JSON.stringify(formDataJson),
       }).then((res) => {
         if (res.status == 200) {
-          let data = res.json();
-          localStorage.setItem("jwt_token", data.jwt_token);
-          router.push("/main");
+          res.json().then((data) => {
+            localStorage.setItem("jwt_token", data.jwt_token);
+            router.push("/main");
+          });
         } else {
           setError("Server processing error, please retry later!");
         }

@@ -56,9 +56,10 @@ export default function OTPSceen() {
         body: JSON.stringify(formDataJson),
       }).then((res) => {
         if (res.status == 200) {
-          let data = res.json();
-          localStorage.setItem("jwt_token", data.jwt_token);
-          router.push("/main");
+          res.json().then((data) => {
+            localStorage.setItem("jwt_token", data.jwt_token);
+            router.push("/main");
+          });
         } else if (res.status == 410) {
           setError("Your otp has expired, please get a new one and re-submit!");
         } else {

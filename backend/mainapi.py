@@ -425,7 +425,7 @@ class Application:
                 }
             return {
                 "message": "Task completed succesfully",
-                "result": task.user_task_generated,
+                "result": task.user_generated_summary,
             }
 
         @self.app.get("/user/pending_tasks")
@@ -450,6 +450,28 @@ class Application:
                 del task["_id"]
                 tasks_list.append(task)
             return {"pending_tasks": tasks_list}
+
+        @self.app.get("/user/tasks")
+        async def get_all_tasks(
+            current_user: Annotated[User, Depends(get_current_user_secure_external)]
+        ):
+            """
+            Endpoint to get all tasks for the current user.
+
+            Args:
+                current_user (User): Current user obtained from JWT token.
+
+            Returns:
+                list: List of tasks for the current user.
+            """
+
+            tasks = UserTasks.objects(user_email=current_user.user_email)
+            tasks_list = []
+            for task in tasks:
+                task = task.to_mongo().to_dict()
+                del task["_id"]
+                tasks_list.append(task)
+            return {"tasks": tasks_list}
 
         @self.app.get("/user/completed_tasks")
         async def get_all_completed_tasks(
