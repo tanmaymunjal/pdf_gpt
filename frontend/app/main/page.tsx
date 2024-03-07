@@ -76,14 +76,24 @@ export default function Home() {
         if (res.status != 200) {
           setError("There was an internal server error,please try later!");
         } else {
-          res.json().then((data) => {
-            console.log(data);
-            setSummary(data.result);
+          res.blob().then((blob) => {
+            // Create a temporary URL for the blob
+            const url = window.URL.createObjectURL(blob);
+            // Create a link element
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", task_id+".txt");
+            // Append the link to the document body
+            document.body.appendChild(link);
+            // Trigger the click event on the link
+            link.click();
+            // Remove the link from the document body
+            document.body.removeChild(link);
           });
         }
       });
     } catch (e: any) {
-      setError(e);
+      setError(e.toString());
     }
   }
 
