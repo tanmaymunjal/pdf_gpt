@@ -36,7 +36,11 @@ class CustomMiddleware:
                 self.logger.info(f"Request received: {request.method} {request.url}")
                 self.logger.info(f"Headers: {request.headers}")
                 body = await request.body()
-                self.logger.info(f"Request Body: {body.decode()}")
+                # for non utf-8 decodable file bodies
+                try:
+                    self.logger.info(f"Request Body: {body.decode()}")
+                except:
+                    pass
 
                 response = await call_next(request)
 

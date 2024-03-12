@@ -340,11 +340,11 @@ class Application:
                     set__user_docs_capacity=current_user.user_docs_capacity
                     - len(read_docs)
                 )
-                if current_user.user_docs_capacity < 0:
-                    raise HTTPException(
-                        status_code=402,
-                        detail="You have utilised all free summary generations",
-                    )
+                # if current_user.user_docs_capacity < 0:
+                #     raise HTTPException(
+                #         status_code=402,
+                #         detail="You have utilised all free summary generations",
+                #     )
             else:
                 user_openai_key = current_user.user_openai_key
             task_id = self.celery_application.run_generate_task(
