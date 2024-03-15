@@ -26,7 +26,7 @@ class GPTSummarisation:
             api_key (str): The API key for accessing OpenAI services.
             model (str): The GPT model to use for summarization.
         """
-        self.client = client = OpenAI(api_key=global_config["OpenAI"]["API_KEY"])
+        self.client = OpenAI(api_key=api_key)
         self.model = model
 
     def call_open_api(self, prompt: str, prompt_length: int) -> str:

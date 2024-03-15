@@ -26,5 +26,5 @@ class PasswordResetRequestModel(BaseModel):
 class TaskCompletionNotification(BaseModel):
     notification_auth: str
     task_id: str
-    generated_summary: None | str = None 
+    generated_summary: None | str = None
     task_status: str

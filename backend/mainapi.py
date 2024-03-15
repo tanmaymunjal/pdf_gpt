@@ -340,11 +340,11 @@ class Application:
                     set__user_docs_capacity=current_user.user_docs_capacity
                     - len(read_docs)
                 )
-                # if current_user.user_docs_capacity < 0:
-                #     raise HTTPException(
-                #         status_code=402,
-                #         detail="You have utilised all free summary generations",
-                #     )
+                if current_user.user_docs_capacity < 0:
+                    raise HTTPException(
+                        status_code=402,
+                        detail="You have utilised all free summary generations",
+                    )
             else:
                 user_openai_key = current_user.user_openai_key
             task_id = self.celery_application.run_generate_task(
@@ -425,12 +425,13 @@ class Application:
                     "status": "FAILED",
                 }
             # Create a temporary file
-            with tempfile.NamedTemporaryFile(mode='w+', delete=False) as temp_file:
+            with tempfile.NamedTemporaryFile(mode="w+", delete=False) as temp_file:
                 temp_file.write(task.user_generated_summary)
 
-
             # Return the text file as response
-            return FileResponse(temp_file.name, filename=f"{task_id}.txt", media_type="text/plain")
+            return FileResponse(
+                temp_file.name, filename=f"{task_id}.txt", media_type="text/plain"
+            )
 
         @self.app.get("/user/pending_tasks")
         async def pending_tasks(
